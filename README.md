@@ -8,7 +8,7 @@ From the data set, creates a second, independent tidy data set with the average 
 
 
 
-step 0
+#step 0
 creating a directory, download the zip file and unzip it 
 
 if(!file.exists("./mobile")){dir.create("./mobile")}
@@ -17,7 +17,7 @@ download.file(fileUrl, destfile = "./mobile/study.zip")
 unzip("./mobile/study.zip")
 
 
-step 1
+#step 1
 reading the different files into variables except for features.txt which will be handled later
 header = FALSE otherwise the header would contain data from the first line
 
@@ -36,17 +36,17 @@ subject_test <- read.csv("./UCI HAR Dataset/test/subject_test.txt", header = FAL
 activity_labels <- read.csv("./UCI HAR Dataset/activity_labels.txt", header = FALSE)
 
 
-step 2
+#step 2
 checking the hypothesis, that the files in Inertial Signals directories are inputs of X_test or X_train
 based on the README.txt, the X_test and X-train files contain the values calculated from the windows (rows) of signal files.
 "From each window, a vector of features was obtained by calculating variables from the time and frequency domain."  
 consequently, the data in Inertial Signals directories should not be processed now.
 
 
-step 3
+#step 3
 merging the data frames of test data
 
-step 3/a
+#step 3/a
 first activity_labels shall be tidy with an appropriate id 
 to separate the nr from the name of activities, I will use separate function from tidyr package
 
@@ -54,33 +54,33 @@ library(tidyr)
 activity_labels <- separate(activity_labels, V1, c("activity_nr", "activity"), sep = " ")
 activity_labels$activity <- tolower(activity_labels$activity) 
 
-step 3/b
+#step 3/b
 rename the column of subjects as "examinedperson"
 
 library(dplyr)
 subject_test <- rename (subject_test, "examinedperson" = "V1")
 
-step 3/c
+#step 3/c
 giving an id to y_test, X_test, subject_test
 
 y_test$activity_id <- rownames(y_test)
 X_test$test_id <- rownames(X_test)
 subject_test$subject_id <- rownames(subject_test)
 
-step 3/d
+#step 3/d
 numbers should be replaced by activity names in y_test 
 
 temp <- merge(activity_labels, y_test, by.x ="activity_nr", by.y ="V1")
 y_test <- temp[,2:3]
 
-step 3/e
+#step 3/e
 merging y_test, subject_test, than X_test
 
 temp <- merge(y_test, subject_test, by.x ="activity_id", by.y ="subject_id")
 X_test <- merge(X_test, temp, by.x ="test_id", by.y ="activity_id")
 
 
-step 4
+#step 4
 merging the data frames of train data the same way as test data
 
 subject_train <- rename (subject_train, "examinedperson" = "V1")
@@ -96,7 +96,7 @@ temp <- merge(y_train, subject_train, by.x ="activity_id", by.y ="subject_id")
 X_train <- merge(X_train, temp, by.x ="train_id", by.y ="activity_id")
 
 
-step 5
+#step 5
 binding train and test data
 first we get rid of the test_id and train_id variables
 
@@ -118,9 +118,9 @@ rm(X_train)
 rm(X_test)
  
  
-step 6
+#step 6
 
-step 6/a
+#step 6/a
 tidy the features file, all values should be in one row
 since there were white spaces at the end of the lines, text was divided into rows
 sep = "\n" new line solves the issue
@@ -129,7 +129,7 @@ header should also be FALSE, since by mistake the first value is the column name
 
 features <- read.csv("./UCI HAR Dataset/features.txt", header = FALSE, sep = "\n")
 
-step 6/b
+#step 6/b
 the values should be slightly modified
 we need characters instead of factors for using the features as variable names later
 
@@ -163,7 +163,7 @@ features <- mutate (features, colnames = gsub("(angle.*gravity).*", "\\1Mean\\)"
 features <- mutate(features, colnames = gsub("(angle).*(t.+)Mean.*,gravityMean.*", "\\2-\\1", colnames))
 features <- mutate(features, colnames = gsub("(angle).*([X-Z]).*,gravityMean.*", "\\1-\\2", colnames)) 
 
-step 6/c
+#step 6/c
 marking the values for the later separation 
 
 features will be the variables in X data frame
@@ -184,7 +184,7 @@ with the help of regular expressions, I placed ":" marks between them
 features <- mutate(features, colnames = gsub("^(t|f)?(Body|Gravity)?(Acc|Gyro)?(Jerk)?(Mag)?(?:-)?([a-zA-Z]+)(?:\\(\\))?(?:-)?([0-9]+,[0-9]+)?(?:-)?([X-Z])?(?:-)?([0-9X-Z](?:,)?(?:[0-9X-Z])?)?", 
 "\\1:\\2\\3:\\4:\\5:\\6:\\7:\\8:\\9", colnames))
 
-step 7
+#step 7
 separate the fix width text column of X into 561 different variables with the name of the features
 to get rid of the white spaces at the beginning of X V1 column, I use str_trim()
 library(stringr)
@@ -193,11 +193,11 @@ X$V1 <- str_trim(X$V1)
 separation should be made on the basis of one or more white spaces
 X <- separate(X, V1, features$colnames, sep = " +")
 
-step 8
+#step 8
 since the task is to extract only the mean and std variables, I select these from the features variables
 X <- select(X, id, activity, examinedperson, dataset, contains("mean"), contains ("std"), -contains("meanFreq"))
 
-step 9
+#step 9
 in order to have a tidy data set, without more than one categories in a variable name, 
 the mean and std variables are gathered, separated and spread in a way to have the numbers under variables "mean" and "std"  
 X <- gather(X, variables, count, -dataset, -examinedperson, -activity, -id)
@@ -207,7 +207,7 @@ X <- spread(X, indicator,count)
 id, frequencyintervals and coefficients variables are irrelevant in the following steps, they are removed
 X <- select(X, -id, -frequencyintervals, -coefficients)
 
-step 10
+#step 10
 calculating the average value for all variables
 we need numeric values instead of factors, therefore I used lapply and as.character(), than as.numeric() function to alter them
 X <- data.frame(lapply(X, as.character), stringsAsFactors=FALSE)
@@ -237,7 +237,7 @@ final is the second output of the task, having a second tidy data set with the a
 print("the second dataset will be presented with View:")
 View(final)
 
-step 11
+#step 11
 write the result to a txt file
 write.table(final, file = "./final.txt", row.name=FALSE)
  
